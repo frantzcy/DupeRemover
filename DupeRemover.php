@@ -8,8 +8,8 @@ $listSizes = array();
 $configs = array(
 	"move" => 0,
 	"dir" => getcwd(),
-	"dir_doublons" => "/tmp/_doublons",
-	"create_dir_doublons" => 0,
+	"dir_dupe" => "/tmp/_dupe",
+	"create_dir_dupe" => 0,
 	"list" => 0,
 	"copy" => 0,
 	"debug" => 0,
@@ -45,12 +45,12 @@ while($xParm++ < count($parms)){
 		case "--dir":
 			$configs['dir'] = $parms[++$xParm];
 			
-		case "--dir_doublons":
-			$configs['dir_doublons'] = $parms[++$xParm];
+		case "--dir_dupe":
+			$configs['dir_dupe'] = $parms[++$xParm];
 		break;
 		
-		case "--create_dir_doublons":
-			$configs['create_dir_doublons'] = 1;
+		case "--create_dir_dupe":
+			$configs['create_dir_dupe'] = 1;
 		break;
 		
 		case "--list":
@@ -85,9 +85,9 @@ if($configs['debug']){
 #exit;
 
 
-moveDoublons(getcwd(), "");
+moveDupe(getcwd(), "");
 #-----------------------------------------------------------------------------
-function moveDoublons($dir)
+function moveDupe($dir)
 {
     GLOBAL $listMd5, $configs, $listCreatedDirs, $listSizes;
 	$listFiles = array();
@@ -122,15 +122,15 @@ function moveDoublons($dir)
 			if(!is_readable($fileName)) continue;
 			
 			if($configs['list_all']){
-				isDoublon($fileName);
+				isdupe($fileName);
 			}else{
 				$fileSize = filesize($fileName);
 				if(isset($listSizes[$fileSize])) {
 					if($listSizes[$fileSize] != "-DONE-"){
-						isDoublon($listSizes[$fileSize]);
+						isdupe($listSizes[$fileSize]);
 						$listSizes[$fileSize] = "-DONE-";
 					}
-					isDoublon($fileName);
+					isdupe($fileName);
 				}else{
 					$listSizes[$fileSize] = $fileName;
 				}
@@ -141,7 +141,7 @@ function moveDoublons($dir)
 		debugTrace("Doing Directories",30);
 		rsort($listDirs);
 		foreach ($listDirs as $dirName) {
-			moveDoublons($dirName);
+			moveDupe($dirName);
 		}
 
 	}
@@ -149,7 +149,7 @@ function moveDoublons($dir)
 }
 
 
-function isDoublon ($fileName)
+function isdupe ($fileName)
 {
     GLOBAL $listMd5, $configs, $listCreatedDirs, $listSizes;
 
@@ -159,10 +159,10 @@ function isDoublon ($fileName)
 		$listMd5[$m]++;
 		$dir = getDirFromFileName($fileName);
 		if(!isset($listCreatedDirs[$dir])){
-			CreateDirectory($configs['dir_doublons'],$dir);
+			CreateDirectory($configs['dir_dupe'],$dir);
 		}
 
-		if (($configs['move'] || $configs['copy']) && copy("$fileName","$configs[dir_doublons]/$fileName")) {
+		if (($configs['move'] || $configs['copy']) && copy("$fileName","$configs[dir_dupe]/$fileName")) {
 			if($configs['move']){
 				unlink("$fileName");
 			}
@@ -174,7 +174,7 @@ function isDoublon ($fileName)
 
 
 		if($configs['list'] || $configs['list_all']){
-			echo "$m $fileName doublon\n";
+			echo "$m $fileName dupe\n";
 			$soIsIt = 1;
 		}
 	} else {
