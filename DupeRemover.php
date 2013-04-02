@@ -25,8 +25,9 @@ while($xParm++ < count($parms)){
 		break;
 		
 		case "--debug":
-			$configs['debug'] = $parms[++$xParm]+0;
-			if(!$configs['debug']){
+			if(($parms[$xParm+1]+0) >= 1){
+				$configs['debug'] = $parms[++$xParm]+0;
+			}else{
 				$configs['debug'] = 1;
 			}
 		break;
@@ -40,7 +41,6 @@ while($xParm++ < count($parms)){
 			ini_set('memory_limit',$configs[memory].'M');
 			
 		break;
-
 		
 		case "--dir":
 			$configs['dir'] = $parms[++$xParm];
@@ -57,6 +57,10 @@ while($xParm++ < count($parms)){
 			$configs['list'] = 1;
 		break;
 
+		case "--list_same":
+			$configs['list_same'] = 1;
+		break;
+
 		case "--list_all":
 			$configs['list_all'] = 1;
 		break;
@@ -71,21 +75,46 @@ while($xParm++ < count($parms)){
 	}
 }
 
-if(!$configs['copy'] && !$configs['move'] && !$configs['list'] && !$configs['list_all']){
+if(!$configs['copy'] && !$configs['move'] && !$configs['list'] && !$configs['list_all'] && !$configs['list_same']){
 	print "No options, what is it you want !!?!!\n";
 	exit;
 }
 
 
 if($configs['debug']){
+	$configs['copy'] = 0;
+	$configs['delete'] = 0;
+	$configs['list_all'] = 0;
+	$configs['list'] = 0;
+	$configs['create_dir_dupe'] = 0;
+	$configs['move'] = 0;
+
 	print_r($configs);
 }
 
 
-#exit;
+
+
 
 
 moveDupe(getcwd(), "");
+
+if($configs['list_same']){
+	print_r($listSizes);
+	foreach($listSizes as $size => $listFileNames){
+		if(count($listFileNames) > 1){
+			printf("files of this size %s\n",$size);
+			foreach($listFileNames as $fileName){
+				printf("%s %s\n",md5_file($fileName),$fileName);
+			}
+		}
+	}
+}
+
+
+exit(0);
+
+
 #-----------------------------------------------------------------------------
 function moveDupe($dir)
 {
@@ -101,49 +130,32 @@ function moveDupe($dir)
 				if($file == ".." ) continue;
 				if($file == ".Trashes" ) continue;
 				if($file == ".svn" ) continue;
+				if($file == ".git" ) continue;
 
 				$fileName = "$dir/$file";
 				if(!is_readable($fileName))	continue;
 				
 				if (is_dir($fileName)) {
 					debugTrace("---- DirName [$fileName]",35);
-					array_push($listDirs, $fileName);
+					moveDupe($dirName);
 				}else{
 					debugTrace("---- FileName[$fileName]",35);
-					array_push($listFiles, $fileName);
-				}
-			}
-		}
-
-		debugTrace("Doing Files",30);
-		rsort($listFiles);
-		foreach ($listFiles as $fileName) {
-			debugTrace("---- Doing [$fileName]",40);
-			if(!is_readable($fileName)) continue;
-			
-			if($configs['list_all']){
-				isdupe($fileName);
-			}else{
-				$fileSize = filesize($fileName);
-				if(isset($listSizes[$fileSize])) {
-					if($listSizes[$fileSize] != "-DONE-"){
-						isdupe($listSizes[$fileSize]);
-						$listSizes[$fileSize] = "-DONE-";
+					if($configs['list_all']){
+						isdupe($fileName);
+					}else{
+						$fileSize = filesize($fileName);
+						if(isset($listSizes[$fileSize])) {
+							debugTrace("---- push($fileSize)",35);
+							array_push($listSizes[$fileSize],$fileName);
+						}else{
+							debugTrace("---- new($fileSize)",35);
+							$listSizes[$fileSize] = array($fileName);
+						}
+						isdupe($fileName);
 					}
-					isdupe($fileName);
-				}else{
-					$listSizes[$fileSize] = $fileName;
 				}
 			}
-        }
-		unset($listFiles);
-
-		debugTrace("Doing Directories",30);
-		rsort($listDirs);
-		foreach ($listDirs as $dirName) {
-			moveDupe($dirName);
 		}
-
 	}
 	debugTrace("Closing dir : $dir",30);
 }
@@ -158,7 +170,8 @@ function isdupe ($fileName)
 	if (isset($listMd5[$m])) {
 		$listMd5[$m]++;
 		$dir = getDirFromFileName($fileName);
-		if(!isset($listCreatedDirs[$dir])){
+		
+		if(!isset($listCreatedDirs[$dir]) && ($configs['move'] || $configs['copy'])){
 			CreateDirectory($configs['dir_dupe'],$dir);
 		}
 
@@ -172,7 +185,6 @@ function isdupe ($fileName)
 			unlink("$fileName");
 		}
 
-
 		if($configs['list'] || $configs['list_all']){
 			echo "$m $fileName dupe\n";
 			$soIsIt = 1;
@@ -182,7 +194,6 @@ function isdupe ($fileName)
 		if($configs['list_all']){
 			echo "$m $fileName \n";
 		}
-		#echo "$m $file\n";
 	}
 	return $soIsIt;
 }
