@@ -1,6 +1,18 @@
 #!/usr/bin/php
 <?php
-#ini_set('memory_limit','512M');
+
+#	What: Duplicate file Checker
+#	Why: for fun
+#	Who: Frantzcy@Paisible.com
+#	When: noted in git
+#	Where: Spare time
+#	
+#  Yet to come
+#	more comments
+#	--html
+#	--htmlout $filename
+
+
 $listMd5 = array();
 $listCreatedDirs = array();
 $listSizes = array();
