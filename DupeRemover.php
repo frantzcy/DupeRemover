@@ -84,6 +84,9 @@ while($xParm++ < count($parms)){
 		case "--delete":
 			$configs['delete'] = 1;
 		break;
+		default:
+			print("invalide option : $parm\n");
+		exit;
 	}
 }
 
