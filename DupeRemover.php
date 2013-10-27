@@ -1,8 +1,8 @@
 #!/usr/bin/php
 <?php
-
+#
 #	What: Duplicate file Checker
-#	Why: for fun
+#	Why: for fun, because I can
 #	Who: Frantzcy@Paisible.com
 #	When: noted in git
 #	Where: Spare time
